@@ -10,6 +10,12 @@ pub struct QuestionAnswer {
     pub answer: String,
 }
 
+#[derive(Debug, Default)]
+struct Stats {
+    sum: f64,
+    count: u64,
+}
+
 /// Generate Q&A pairs from a CSV file path.
 ///
 /// The function inspects numeric columns and produces questions like:
@@ -24,13 +30,6 @@ pub fn generate_qa_from_csv<P: AsRef<Path>>(path: P) -> Result<Vec<QuestionAnswe
         .headers()
         .map_err(|e| format!("Failed to read headers: {e}"))?
         .clone();
-
-    // We will track sum and count for numeric columns by index.
-    #[derive(Debug, Default)]
-    struct Stats {
-        sum: f64,
-        count: u64,
-    }
 
     let mut stats: HashMap<usize, Stats> = HashMap::new();
 
@@ -88,17 +87,10 @@ fn accumulate_numeric_fields(record: &StringRecord, stats: &mut HashMap<usize, S
             continue;
         }
 
-        // Try to parse as f64. Non numeric values are just ignored.
         if let Ok(value) = trimmed.parse::<f64>() {
             let entry = stats.entry(idx).or_insert_with(Stats::default);
             entry.sum += value;
             entry.count += 1;
         }
-    }
-
-    #[derive(Debug, Default)]
-    struct Stats {
-        sum: f64,
-        count: u64,
     }
 }
